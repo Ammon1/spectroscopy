@@ -115,14 +115,14 @@ class Window(tk.Frame):
         intensities=np.reshape(table,(self.rows,index_num))
         intensities=np.transpose(intensities)
         #position verification
-        ma_x_y=[[],[],[]]
+        ma_x_y=[]
         print(df.head())
         for pos in range(0,intensities.shape[1]):
-            x=df.iloc[::index_num,0].values
-            y=df.iloc[::index_num,1].values
-            z=[x,pos,y]
+            x=df.iloc[index_num*pos:index_num*pos+1,0].values
+            y=df.iloc[index_num*pos:index_num*pos+1,1].values
+            z=str(x)+' '+str(pos)+' '+str(y)
             ma_x_y.append(z)
-        print(ma_x_y[-1])
+            print(z)
         self.intensities=intensities
         self.lambdas=self.lambdas[:intensities.shape[0]]
 #        print(self.intensities.shape[1],self.pos_x.shape[0]*self.pos_y.shape[0])
@@ -200,10 +200,7 @@ class Window(tk.Frame):
         
         rescaler=(intensities[800,0]/int_ref[800])
         
-        print(int_ref[:20])
         self.int_ref=int_ref*rescaler
-        print(rescaler)
-        print(int_ref[:20])
         
         x=self.lambdas[:1011]
         y=self.int_ref[:]
@@ -440,7 +437,7 @@ class Window(tk.Frame):
         poz2D=2680
         FWHM2D=30
         failed=False
-        popt_saved=[0,2680,30]
+        popt_saved=[self.intensities[0,0],0,2680,30]
         
         root2 = tk.Toplevel()
         fig2 = plt.Figure()
@@ -454,20 +451,20 @@ class Window(tk.Frame):
         ax.set_title('2D line fit')
         line2D,=ax.plot(x_draw,y_draw)
         line2D_fit,=ax.plot(x_draw_fit,y_draw_fit)
-        ax.plot(x_draw,y_draw)
+        #ax.plot(x_draw,y_draw)
         canvas2.draw()
         
         for i in range (0,self.intensities.shape[1]):
             
-            x=self.lambdas[:200]
-            y=self.intensities[:200,i]
+            x=self.lambdas[:400]
+            y=self.intensities[:400,i]
             max2D=np.max(y)
             try:
                 popt, pcov = curve_fit(self.fit_lorenz, x , y,p0=popt_saved,
-                                   bounds=([0,poz2D-20,FWHM2D-15],[10*max2D,poz2D+60,FWHM2D+40]))
+                                   bounds=([0,0,poz2D-20,FWHM2D-15],[np.max(y),10*max2D,poz2D+60,FWHM2D+40]))
                 
             except:
-                popt=[0,2700,30]
+                popt=[0,0,2700,30]
                 failed=True
                 print('failed ')
             
@@ -488,21 +485,31 @@ class Window(tk.Frame):
             self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(par))
             popt_saved=popt
             
-            self.map_pos2D=np.append(self.map_pos2D,popt[2])
-            self.map_FWHM2D=np.append(self.map_FWHM2D,popt[1])
-        print(self.map_FWHM2D.shape[0],'  ',self.map_pos2D.shape[0],'  ',self.intensities.shape[1])
-        print(self.pos_x.shape[0]*self.pos_y.shape[0])
+            self.map_pos2D=np.append(self.map_pos2D,popt[3])
+            self.map_FWHM2D=np.append(self.map_FWHM2D,popt[2])
+        #print(self.map_FWHM2D.shape[0],'  ',self.map_pos2D.shape[0],'  ',self.intensities.shape[1])
+        #print(self.pos_x.shape[0]*self.pos_y.shape[0])
         
         self.map_FWHM2D=self.map_FWHM2D[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         self.map_pos2D=self.map_pos2D[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
+        root2 = tk.Toplevel()
+        root2.geometry("200x600")
+        fig3 = plt.Figure()
+        canvas3 = FigureCanvasTkAgg(fig3, master=root2)
+        canvas3.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        ax = fig3.add_subplot(111)
+        ax.set_title('2D FWHM map')
+        ax.matshow(self.map_FWHM2D)
         
-        plt.title('2D FWHM map')
-        plt.matshow(self.map_FWHM2D)
+        fig4=plt.Figure()
+        canvas3 = FigureCanvasTkAgg(fig4, master=root2)
+        canvas3.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=False)
+        ax = fig4.add_subplot(111)
+        ax.set_title('2D position map')
+        ax.matshow(self.map_pos2D)
         
-        plt.title('2D position map')
-        plt.matshow(self.map_pos2D)
-        
+        canvas3.draw()
         
     def fitG(self):
         pozG=1580
@@ -549,8 +556,8 @@ class Window(tk.Frame):
             self.progressbar.update()
             self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(popt))
     
-    def fit_lorenz(self,E,I0,E0,gamma):
-        return I0*((gamma**2)/(((E-E0)**2)+gamma**2))
+    def fit_lorenz(self,E,y0,I0,E0,gamma):
+        return (y0+I0*((gamma**2)/(((E-E0)**2)+gamma**2)))
     
         
 root = tk.Tk()
