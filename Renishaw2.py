@@ -15,6 +15,10 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 
+import time
+
+
+
 
 # Here, we are creating our class, Window, and inheriting from the Frame
 # class. Frame is a class from the tkinter module. (see Lib/tkinter/__init__)
@@ -245,34 +249,38 @@ class Window(tk.Frame):
         
         index=(np.abs(self.lambdas - poz2D)).argmin()
         
-        failed=False
-        popt_saved=[self.intensities[0,0],0,poz2D,FWHM2D]
         
-        line2D,line2D_fit,canvas2=draw_fitting('fit2D',self.lambdas,self.intensities[:,0])
+        
+        ax,line2D,line2D_fit,canvas2=draw_fitting('fit2D',self.lambdas,self.intensities[:,0])
         
         for i in range (0,self.intensities.shape[1]):
           
             x=self.lambdas[index-100:index+100]
             y=self.intensities[index-100:index+100,i]
             max2D=np.max(y)
+            poz2D=x[np.where(y==np.max(y))]
+            
+            popt_saved=[self.intensities[0,i],max2D,poz2D,FWHM2D]
+            
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
-                                   bounds=([np.min(y),0,poz2D-20,FWHM2D-15],[np.max(y),100*max2D,poz2D+60,FWHM2D+40]))
+                                   bounds=([np.min(y),0,poz2D-40,FWHM2D-15],[np.max(y),100*max2D,poz2D+60,FWHM2D+40]))
                 
             except:
-                popt=[0,0,2680,30]
-                failed=True
+                popt=[np.min(y),0,poz2D,30]
                 print('failed ')
             
             line2D.set_ydata(y)
             line2D.set_xdata(x)
-            if failed== False:
-                line2D_fit.set_ydata(fit_lorenz(x, *popt))
-            else:
-                line2D_fit.set_ydata=y
+            line2D_fit.set_ydata(fit_lorenz(x, *popt))
                 
             line2D_fit.set_xdata(x)
-            canvas2.draw()
+            try:
+                ax.set_ylim(np.min(y),np.max(y))
+                canvas2.draw()
+                
+            except:
+                print('failed to draw')
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -298,15 +306,17 @@ class Window(tk.Frame):
         map_FWHMG=np.empty(1)
         
         index=(np.abs(self.lambdas - pozG)).argmin()
-        popt_saved=[self.intensities[0,0],0,pozG,FWHMG]
         
-        lineG,lineG_fit,canvas2=draw_fitting('fitG',self.lambdas,self.intensities[:,0])
+        
+        ax,lineG,lineG_fit,canvas2=draw_fitting('fitG',self.lambdas,self.intensities[:,0])
         
         for i in range (0,self.intensities.shape[1]):
             
             x=self.lambdas[index-100:index+100]
             y=self.intensities[index-100:index+100,i]
             maxG=np.max(y)
+            pozG=x[np.where(y==np.max(y))]
+            popt_saved=[self.intensities[0,i],maxG,pozG,FWHMG]
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
                                    bounds=([np.min(y),0,pozG-10,FWHMG-5],[np.max(y),10*maxG,pozG+60,FWHMG+20]))
@@ -320,7 +330,12 @@ class Window(tk.Frame):
             
             lineG_fit.set_ydata(fit_lorenz(x, *popt))
             lineG_fit.set_xdata(x)
-            canvas2.draw()
+            try:
+                ax.set_ylim(np.min(y),np.max(y))
+                canvas2.draw()
+               
+            except:
+                print('failed to draw')
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -346,36 +361,37 @@ class Window(tk.Frame):
         map_posD=np.empty(1)
         map_FWHMD=np.empty(1)
         
-        failed=False
-        popt_saved=[self.intensities[0,0],0,pozD,FWHMD]
         
-        lineD,lineD_fit,canvas2=draw_fitting('fitD',self.lambdas,self.intensities[:,0])
+        
+        ax,lineD,lineD_fit,canvas2=draw_fitting('fitD',self.lambdas,self.intensities[:,0])
         
         for i in range (0,self.intensities.shape[1]):
             
             x=self.lambdas[index-50:index+50]
             y=self.intensities[index-50:index+50,i]
             
+            pozD=x[np.where(y==np.max(y))]
            
             maxD=np.max(y)
+            
+            popt_saved=[self.intensities[0,i],maxD,pozD,FWHMD]
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
                                    bounds=([0,0,pozD-10,FWHMD-5],[np.max(y),10*maxD,pozD+60,FWHMD+20]))
                 
             except:
                 popt=[0,0,1350,20]
-                failed=True
                 print('failed ')
             
             lineD.set_ydata(y)
             lineD.set_xdata(x)
-            if failed== False:
-                lineD_fit.set_ydata(fit_lorenz(x, *popt))
-            else:
-                lineD_fit.set_ydata=y
-                
+            lineD_fit.set_ydata(fit_lorenz(x, *popt))
             lineD_fit.set_xdata(x)
-            canvas2.draw()
+            try:
+                ax.set_ylim(np.min(y),np.max(y))
+                canvas2.draw()
+            except:
+                print('failed to draw')
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -400,25 +416,27 @@ class Window(tk.Frame):
         map_posH2=np.empty(1)
         map_INTH2=np.empty(1)
 
-        popt_saved=[self.intensities[index-20,0],0.1,pozH2,FWHMH2]
-        lineH2,lineH2_fit,canvas2=draw_fitting('fitH2',self.lambdas[index-20:index+20],self.intensities[index-20:index+20,0])
+        popt_saved=[self.intensities[index-10,0],0.1,pozH2,FWHMH2]
+        ax,lineH2,lineH2_fit,canvas2=draw_fitting('fitH2',self.lambdas[index-10:index+10],self.intensities[index-10:index+10,0])
         
         for i in range (0,self.intensities.shape[1]):
             
-            x=self.lambdas[index-20:index+20]
-            y=self.intensities[index-20:index+20,i]
+            x=self.lambdas[index-10:index+10]
+            y=self.intensities[index-10:index+10,i]
+            
+            pozH2=x[np.where(y==np.max(y))]
             
             
             intH2=np.max(y)-np.min(y)
             
             bounds=([np.min(y),0,pozH2-10,0],[np.max(y),10*intH2,pozH2+20,FWHMH2+10])
-            print(bounds)
+            failed=False
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
-                                   bounds=bounds)
-                
+                                   bounds=bounds) 
             except:
-                popt=[self.intensities[index-20,i],0,pozH2,FWHMH2]
+                popt=[np.min(y),intH2,pozH2,FWHMH2]
+                failed=True
                 print('failed ')
             
             lineH2.set_ydata(y)
@@ -426,7 +444,12 @@ class Window(tk.Frame):
             
             lineH2_fit.set_ydata(fit_lorenz(x, *popt))
             lineH2_fit.set_xdata(x)
+            ax.set_ylim(np.min(y),np.max(y))
             canvas2.draw()
+                
+            if failed == True:
+                time.sleep(1) 
+                print('failed to draw')
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -553,9 +576,6 @@ def subt_subst(int_ref,intensities,master,progressbar,var):
     
 def clean_data(intensities,master,progressbar,var):
     
-        #Win=Window(master)
-        progressbar["value"] = 50
-        progressbar.update()
         
         var.set("data cleaning")
         df=pd.DataFrame(intensities)
@@ -567,10 +587,7 @@ def clean_data(intensities,master,progressbar,var):
         df_roll_20=df.rolling(20).mean().shift(-10)
         df_roll_4=df.rolling(4).mean().shift(-2)
         df_clear=np.abs(df-df_roll_4)/np.sqrt(np.abs(df_roll_20))
-        
-        progressbar["value"] = 20
-        progressbar.update()
-        
+
         df_clear=df_clear.fillna(df_clear.mean())
         df_spike=df_clear>7
 
@@ -579,8 +596,6 @@ def clean_data(intensities,master,progressbar,var):
         df_new=df_spike*df_roll_20+df_anti_spike*df
         df_new=df_new.iloc[10:-10,:]
         
-        progressbar["value"] = 60
-        progressbar.update()
         
         del df_roll_20,df_roll_4,df_clear,df_spike,df_anti_spike,
         
@@ -594,14 +609,11 @@ def clean_data(intensities,master,progressbar,var):
         transformer = FastICA(n_components=10,random_state=0)
         X_transformed = transformer.fit_transform(intensities)
         #helped empty matrix
-        progressbar["value"] = 80
-        progressbar.update()
         
         intensities_new=np.zeros(intensities.shape)
         
         var.set("constructing data from ICA vectors")
         
-        #for (x,y),value in c(np.transpose(intensities)):
         for x in range(0,intensities.shape[1]):
             progressbar["value"] = (x/intensities.shape[1])*100
             progressbar.update()
@@ -634,11 +646,11 @@ def draw_fitting(name,lambdas,intensities):
         line2D_fit,=ax.plot(x_draw_fit,y_draw_fit)
         #ax.plot(x_draw,y_draw)
         canvas2.draw()
-        return line2D,line2D_fit,canvas2
+        return ax,line2D,line2D_fit,canvas2
     
 def draw_maps(map_FWHM2D,tite1,map_pos2D,title2,x_ticks,y_ticks):
         root2 = tk.Toplevel()
-        root2.geometry("200x600")
+        root2.geometry("400x600")
         fig3 = plt.Figure()
         canvas3 = FigureCanvasTkAgg(fig3, master=root2)
         canvas3.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=False)
