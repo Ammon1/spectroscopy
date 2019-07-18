@@ -33,7 +33,7 @@ class Window(tk.Frame):
     def init_window(self):
 
         # changing the title of our master widget      
-        self.master.title("GUI")
+        self.master.title("Renishaw")
         self.pack(fill=tk.BOTH, expand=1)
 
         menu = tk.Menu(self.master)
@@ -118,7 +118,6 @@ class Window(tk.Frame):
         self.var.set("rescale ref to map")
 
         int_ref=self.int_ref
-        #ref_max=np.argmax(int_ref)
         try:
             
             rescaler=(self.intensities[800,0]/int_ref[800])
@@ -135,9 +134,6 @@ class Window(tk.Frame):
      
     def subt_subst(self):
         
-        #!!!
-        #cos nie tak z rysowaniem i paskiem stanu
-        #!!!
         self.var.set("subtracting substrate")
         
         self.intensities_new=subt_subst(self.int_ref,self.intensities,self.master,self.progressbar,self.var)
@@ -241,27 +237,30 @@ class Window(tk.Frame):
         canvas.draw()
     
     def fit2D(self):
+        poz2D=2680
+        FWHM2D=30
+        
         map_pos2D=np.empty(1)
         map_FWHM2D=np.empty(1)
         
-        poz2D=2680
-        FWHM2D=30
+        index=(np.abs(self.lambdas - poz2D)).argmin()
+        
         failed=False
         popt_saved=[self.intensities[0,0],0,poz2D,FWHM2D]
         
-        line2D,line2D_fit,canvas2=draw_fitting(self.lambdas,self.intensities[:,0])
+        line2D,line2D_fit,canvas2=draw_fitting('fit2D',self.lambdas,self.intensities[:,0])
         
         for i in range (0,self.intensities.shape[1]):
-            
-            x=self.lambdas[:400]
-            y=self.intensities[:400,i]
+          
+            x=self.lambdas[index-100:index+100]
+            y=self.intensities[index-100:index+100,i]
             max2D=np.max(y)
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
-                                   bounds=([0,0,poz2D-20,FWHM2D-15],[np.max(y),10*max2D,poz2D+60,FWHM2D+40]))
+                                   bounds=([np.min(y),0,poz2D-20,FWHM2D-15],[np.max(y),100*max2D,poz2D+60,FWHM2D+40]))
                 
             except:
-                popt=[0,0,2700,30]
+                popt=[0,0,2680,30]
                 failed=True
                 print('failed ')
             
@@ -281,7 +280,6 @@ class Window(tk.Frame):
             for o in popt:
                 par.append(int(o))
             self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(par))
-            popt_saved=popt
             
             map_pos2D=np.append(map_pos2D,popt[3])
             map_FWHM2D=np.append(map_FWHM2D,popt[2])
@@ -289,42 +287,38 @@ class Window(tk.Frame):
         map_FWHM2D=map_FWHM2D[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         map_pos2D=map_pos2D[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
-        draw_maps(map_FWHM2D,map_pos2D)
+        draw_maps(map_FWHM2D,'FWHM 2D map',map_pos2D,'position 2D map',self.pos_x,self.pos_y)
         
         
         
     def fitG(self):
         pozG=1580
-        FWHMG=12
+        FWHMG=15
         map_posG=np.empty(1)
         map_FWHMG=np.empty(1)
-
-        failed=False
+        
+        index=(np.abs(self.lambdas - pozG)).argmin()
         popt_saved=[self.intensities[0,0],0,pozG,FWHMG]
         
-        lineG,lineG_fit,canvas2=draw_fitting(self.lambdas,self.intensities[:,0])
+        lineG,lineG_fit,canvas2=draw_fitting('fitG',self.lambdas,self.intensities[:,0])
         
         for i in range (0,self.intensities.shape[1]):
             
-            x=self.lambdas[600:800]
-            y=self.intensities[600:800,i]
+            x=self.lambdas[index-100:index+100]
+            y=self.intensities[index-100:index+100,i]
             maxG=np.max(y)
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
-                                   bounds=([0,0,pozG-10,FWHMG-5],[np.max(y),10*maxG,pozG+60,FWHMG+20]))
+                                   bounds=([np.min(y),0,pozG-10,FWHMG-5],[np.max(y),10*maxG,pozG+60,FWHMG+20]))
                 
             except:
-                popt=[0,0,1580,12]
-                failed=True
+                popt=[0,0,1580,15]
                 print('failed ')
             
             lineG.set_ydata(y)
             lineG.set_xdata(x)
-            if failed== False:
-                lineG_fit.set_ydata(fit_lorenz(x, *popt))
-            else:
-                lineG_fit.set_ydata=y
-                
+            
+            lineG_fit.set_ydata(fit_lorenz(x, *popt))
             lineG_fit.set_xdata(x)
             canvas2.draw()
             
@@ -334,7 +328,6 @@ class Window(tk.Frame):
             for o in popt:
                 par.append(int(o))
             self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(par))
-            popt_saved=popt
             
             map_posG=np.append(map_posG,popt[3])
             map_FWHMG=np.append(map_FWHMG,popt[2])
@@ -342,37 +335,114 @@ class Window(tk.Frame):
         map_FWHMG=map_FWHMG[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         map_posG=map_posG[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
-        draw_maps(map_FWHMG,map_posG)
+        draw_maps(map_FWHMG,'FWHM G map',map_posG,'position G map',self.pos_x,self.pos_y)
         
     def fitD(self):
         pozD=1350
-        FWHMD=15    
+        FWHMD=20
+        
+        index=(np.abs(self.lambdas - pozD)).argmin()
+        
+        map_posD=np.empty(1)
+        map_FWHMD=np.empty(1)
+        
+        failed=False
+        popt_saved=[self.intensities[0,0],0,pozD,FWHMD]
+        
+        lineD,lineD_fit,canvas2=draw_fitting('fitD',self.lambdas,self.intensities[:,0])
+        
         for i in range (0,self.intensities.shape[1]):
-            x=self.lambdas[:-1]
-            y=self.intensities[:,i]
-            maxD=np.max(y)
             
-            popt, pcov = curve_fit(self.fit_lorenz, x , y,
-                                   bounds=([0.8*maxD,pozD-20,FWHMD-20],[1.2*maxD,pozD+20,FWHMD+20]))
+            x=self.lambdas[index-50:index+50]
+            y=self.intensities[index-50:index+50,i]
+            
+           
+            maxD=np.max(y)
+            try:
+                popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
+                                   bounds=([0,0,pozD-10,FWHMD-5],[np.max(y),10*maxD,pozD+60,FWHMD+20]))
+                
+            except:
+                popt=[0,0,1350,20]
+                failed=True
+                print('failed ')
+            
+            lineD.set_ydata(y)
+            lineD.set_xdata(x)
+            if failed== False:
+                lineD_fit.set_ydata(fit_lorenz(x, *popt))
+            else:
+                lineD_fit.set_ydata=y
+                
+            lineD_fit.set_xdata(x)
+            canvas2.draw()
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
-            self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(popt))
+            par=[]
+            for o in popt:
+                par.append(int(o))
+            self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(par))
+            
+            map_posD=np.append(map_posD,popt[3])
+            map_FWHMD=np.append(map_FWHMD,popt[2])
+        
+        map_FWHMD=map_FWHMD[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
+        map_posD=map_posD[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
+        
+        draw_maps(map_FWHMD,'FWHM D map ',map_posD,'position D map',self.pos_x,self.pos_y)
     
     def fitH2(self):
-        pozH2=2120
-        FWHMH2=10
+        pozH2=2145
+        FWHMH2=1
+        index=(np.abs(self.lambdas - pozH2)).argmin()
+        
+        map_posH2=np.empty(1)
+        map_INTH2=np.empty(1)
+
+        popt_saved=[self.intensities[index-20,0],0.1,pozH2,FWHMH2]
+        lineH2,lineH2_fit,canvas2=draw_fitting('fitH2',self.lambdas[index-20:index+20],self.intensities[index-20:index+20,0])
+        
         for i in range (0,self.intensities.shape[1]):
-            x=self.lambdas[:-1]
-            y=self.intensities[:,i]
-            maxH2=np.max(y)
             
-            popt, pcov = curve_fit(self.fit_lorenz, x , y,
-                                   bounds=([0.8*maxH2,pozH2-20,FWHMH2-20],[1.2*maxH2,pozH2+20,FWHMH2+20]))
+            x=self.lambdas[index-20:index+20]
+            y=self.intensities[index-20:index+20,i]
+            
+            
+            intH2=np.max(y)-np.min(y)
+            
+            bounds=([np.min(y),0,pozH2-10,0],[np.max(y),10*intH2,pozH2+20,FWHMH2+10])
+            print(bounds)
+            try:
+                popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
+                                   bounds=bounds)
+                
+            except:
+                popt=[self.intensities[index-20,i],0,pozH2,FWHMH2]
+                print('failed ')
+            
+            lineH2.set_ydata(y)
+            lineH2.set_xdata(x)
+            
+            lineH2_fit.set_ydata(fit_lorenz(x, *popt))
+            lineH2_fit.set_xdata(x)
+            canvas2.draw()
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
-            self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(popt))
+            par=[]
+            for o in popt:
+                par.append(o)
+            self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(par))
+            #popt_saved=popt
+            
+            map_posH2=np.append(map_posH2,popt[3])
+            map_INTH2=np.append(map_INTH2,popt[1])
+        
+        map_INTH2=map_INTH2[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
+        map_posH2=map_posH2[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
+        
+        draw_maps(map_INTH2,'H2 intensity',map_posH2,'H2 position',self.pos_x,self.pos_y)
     
 def fit_lorenz(E,y0,I0,E0,gamma):
     return (y0+I0*((gamma**2)/(((E-E0)**2)+gamma**2)))
@@ -411,14 +481,25 @@ def open_file():
         intensities=np.reshape(table,(rows,index_num))
         intensities=np.transpose(intensities)
         #position verification
-        ma_x_y=[]
-        print(df.head())
+        x=0
+        y=0
+        correct=True
         for pos in range(0,intensities.shape[1]):
+            if df.iloc[index_num*pos:index_num*pos+1,0].values == x:
+                if y != pos_y[(pos-1)%pos_x.shape[0]]:
+                    #print('1 ',x,y,' ',pos_y[pos%pos_x.shape[0]])
+                    correct=False
+            elif df.iloc[index_num*pos:index_num*pos+1,1].values == y:
+                if x != pos_x[(pos-1)%pos_y.shape[0]]:
+                    #print('2 ',x,y)
+                    correct=False
             x=df.iloc[index_num*pos:index_num*pos+1,0].values
             y=df.iloc[index_num*pos:index_num*pos+1,1].values
-            z=str(x)+' '+str(pos)+' '+str(y)
-            ma_x_y.append(z)
-            print(z)
+         
+        if correct == True:
+            print('rectangular map')
+        else:
+            print('unregular map- You wont make maps of points!')
         intensities=intensities
         lambdas=lambdas[:intensities.shape[0]]
         return intensities,lambdas,pos_x,pos_y,rows
@@ -538,7 +619,7 @@ def grafen_plot(X,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9):
         y+=X[:,6]*a6+X[:,7]*a7+X[:,8]*a8+X[:,9]*a9
         return y
     
-def draw_fitting(lambdas,intensities):
+def draw_fitting(name,lambdas,intensities):
         root2 = tk.Toplevel()
         fig2 = plt.Figure()
         canvas2 = FigureCanvasTkAgg(fig2, master=root2)
@@ -548,29 +629,35 @@ def draw_fitting(lambdas,intensities):
         x_draw,y_draw=lambdas,intensities
         x_draw_fit,y_draw_fit=lambdas,intensities
     
-        ax.set_title('2D line fit')
+        ax.set_title(name)
         line2D,=ax.plot(x_draw,y_draw)
         line2D_fit,=ax.plot(x_draw_fit,y_draw_fit)
         #ax.plot(x_draw,y_draw)
         canvas2.draw()
         return line2D,line2D_fit,canvas2
     
-def draw_maps(map_FWHM2D,map_pos2D):
+def draw_maps(map_FWHM2D,tite1,map_pos2D,title2,x_ticks,y_ticks):
         root2 = tk.Toplevel()
         root2.geometry("200x600")
         fig3 = plt.Figure()
         canvas3 = FigureCanvasTkAgg(fig3, master=root2)
         canvas3.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=False)
         ax = fig3.add_subplot(111)
-        ax.set_title('2D FWHM map')
+        ax.set_title(tite1)
         ax.matshow(map_FWHM2D)
+        fig3.colorbar(ax.matshow(map_FWHM2D))
+        ax.set_xticklabels(x_ticks)  
+        ax.set_yticklabels(y_ticks)
         
         fig4=plt.Figure()
         canvas3 = FigureCanvasTkAgg(fig4, master=root2)
         canvas3.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=False)
         ax = fig4.add_subplot(111)
-        ax.set_title('2D position map')
+        ax.set_title(title2)
         ax.matshow(map_pos2D)
+        fig4.colorbar(ax.matshow(map_pos2D))
+        ax.set_xticklabels(x_ticks)  
+        ax.set_yticklabels(y_ticks)
         
         canvas3.draw()
 #mainloop 
