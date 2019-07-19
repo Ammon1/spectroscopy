@@ -15,16 +15,9 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,NavigationToolbar2Tk)
 from matplotlib.figure import Figure
 
-import time
 
-
-
-
-# Here, we are creating our class, Window, and inheriting from the Frame
-# class. Frame is a class from the tkinter module. (see Lib/tkinter/__init__)
 class Window(tk.Frame):
 
-    # Define settings upon initialization. Here you can specify
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)                    
         self.master = master
@@ -46,7 +39,7 @@ class Window(tk.Frame):
         # create the file object)
         file = tk.Menu(menu)
         #opening file
-        file.add_command(label = 'Open', command = self.open_file)
+        file.add_command(label = 'Open data', command = self.open_file)
         #open reference spectrum
         file.add_command(label = 'Open ref', command = self.open_ref)
         #cleaning the data
@@ -68,8 +61,6 @@ class Window(tk.Frame):
         fit.add_command(label = 'D', command = self.fitD)
         fit.add_command(label = 'Hydrogen', command = self.fitH2)
         menu.add_cascade(label="Fitting", menu=fit)
-        # adds a command to the menu option, calling it exit, and the
-        # command it runs on event is client_exit
      
         self.progressbar["value"] = 0
         self.progressbar.pack(expand=True, fill=tk.BOTH, side=tk.TOP)
@@ -78,7 +69,7 @@ class Window(tk.Frame):
         self.ref_var = tk.DoubleVar()
         self.data_var = tk.DoubleVar()
         
-        label = tk.Label( self.master, textvariable=self.var, relief=tk.RAISED )
+        label = tk.Label( self.master, textvariable=self.var, relief=tk.RAISED,height=2,width=30 )
         label.pack()
         
         
@@ -92,7 +83,6 @@ class Window(tk.Frame):
     def client_exit(self):
         self.master.destroy()
     
-    #main operation program
     def open_file(self):
         self.var.set("Opening file")
         
@@ -253,6 +243,8 @@ class Window(tk.Frame):
         
         ax,line2D,line2D_fit,canvas2=draw_fitting('fit2D',self.lambdas,self.intensities[:,0])
         
+        label_2D = tk.Label( self.master, text='backg int poz  FWHM',height=2,width=30 )
+        label_2D.pack()
         for i in range (0,self.intensities.shape[1]):
           
             x=self.lambdas[index-100:index+100]
@@ -275,23 +267,23 @@ class Window(tk.Frame):
             line2D_fit.set_ydata(fit_lorenz(x, *popt))
                 
             line2D_fit.set_xdata(x)
-            try:
-                ax.set_ylim(np.min(y),np.max(y))
-                canvas2.draw()
-                
-            except:
-                print('failed to draw')
+    
+            ax.set_ylim(np.min(y),np.max(y))
+            ax.set_xlim(np.min(x),np.max(x))
+            canvas2.draw()
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
             par=[]
             for o in popt:
                 par.append(int(o))
+            
             self.var.set(str(int(i/self.intensities.shape[1]*100)) + '%'+str(par))
             
             map_pos2D=np.append(map_pos2D,popt[3])
             map_FWHM2D=np.append(map_FWHM2D,popt[2])
         
+        label_2D.destroy()
         map_FWHM2D=map_FWHM2D[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         map_pos2D=map_pos2D[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
@@ -310,6 +302,8 @@ class Window(tk.Frame):
         
         ax,lineG,lineG_fit,canvas2=draw_fitting('fitG',self.lambdas,self.intensities[:,0])
         
+        label_G = tk.Label( self.master, text='backg int poz  FWHM',height=2,width=30 )
+        label_G.pack()
         for i in range (0,self.intensities.shape[1]):
             
             x=self.lambdas[index-100:index+100]
@@ -330,12 +324,9 @@ class Window(tk.Frame):
             
             lineG_fit.set_ydata(fit_lorenz(x, *popt))
             lineG_fit.set_xdata(x)
-            try:
-                ax.set_ylim(np.min(y),np.max(y))
-                canvas2.draw()
-               
-            except:
-                print('failed to draw')
+            ax.set_ylim(np.min(y),np.max(y))
+            ax.set_xlim(np.min(x),np.max(x))
+            canvas2.draw()
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -347,13 +338,14 @@ class Window(tk.Frame):
             map_posG=np.append(map_posG,popt[3])
             map_FWHMG=np.append(map_FWHMG,popt[2])
         
+        label_G.destroy()
         map_FWHMG=map_FWHMG[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         map_posG=map_posG[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
         draw_maps(map_FWHMG,'FWHM G map',map_posG,'position G map',self.pos_x,self.pos_y)
         
     def fitD(self):
-        pozD=1350
+        pozD=1380
         FWHMD=20
         
         index=(np.abs(self.lambdas - pozD)).argmin()
@@ -361,10 +353,10 @@ class Window(tk.Frame):
         map_posD=np.empty(1)
         map_FWHMD=np.empty(1)
         
-        
-        
         ax,lineD,lineD_fit,canvas2=draw_fitting('fitD',self.lambdas,self.intensities[:,0])
         
+        label_D = tk.Label( self.master, text='backg int poz  FWHM',height=2,width=30 )
+        label_D.pack()
         for i in range (0,self.intensities.shape[1]):
             
             x=self.lambdas[index-50:index+50]
@@ -372,26 +364,24 @@ class Window(tk.Frame):
             
             pozD=x[np.where(y==np.max(y))]
            
-            maxD=np.max(y)
             
-            popt_saved=[self.intensities[0,i],maxD,pozD,FWHMD]
+            popt_saved=[self.intensities[0,i],np.max(y),pozD,FWHMD]
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
-                                   bounds=([0,0,pozD-10,FWHMD-5],[np.max(y),10*maxD,pozD+60,FWHMD+20]))
+                                   bounds=([np.min(y),0,pozD-10,FWHMD-5],[np.max(y),10*np.max(y),pozD+60,FWHMD+20]))
                 
             except:
-                popt=[0,0,1350,20]
+                popt=[np.min(y),10*np.max(y),pozD,20]
                 print('failed ')
             
             lineD.set_ydata(y)
             lineD.set_xdata(x)
             lineD_fit.set_ydata(fit_lorenz(x, *popt))
             lineD_fit.set_xdata(x)
-            try:
-                ax.set_ylim(np.min(y),np.max(y))
-                canvas2.draw()
-            except:
-                print('failed to draw')
+            
+            ax.set_ylim(np.min(y),np.max(y))
+            ax.set_xlim(np.min(x),np.max(x))
+            canvas2.draw()
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -403,6 +393,7 @@ class Window(tk.Frame):
             map_posD=np.append(map_posD,popt[3])
             map_FWHMD=np.append(map_FWHMD,popt[2])
         
+        label_D.destroy()
         map_FWHMD=map_FWHMD[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         map_posD=map_posD[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
@@ -418,7 +409,7 @@ class Window(tk.Frame):
 
         popt_saved=[self.intensities[index-10,0],0.1,pozH2,FWHMH2]
         ax,lineH2,lineH2_fit,canvas2=draw_fitting('fitH2',self.lambdas[index-10:index+10],self.intensities[index-10:index+10,0])
-        
+        label_H2 = tk.Label( self.master, text='backg int poz  FWHM',height=2,width=30 )
         for i in range (0,self.intensities.shape[1]):
             
             x=self.lambdas[index-10:index+10]
@@ -430,14 +421,14 @@ class Window(tk.Frame):
             intH2=np.max(y)-np.min(y)
             
             bounds=([np.min(y),0,pozH2-10,0],[np.max(y),10*intH2,pozH2+20,FWHMH2+10])
-            failed=False
+            
             try:
                 popt, pcov = curve_fit(fit_lorenz, x , y,p0=popt_saved,
                                    bounds=bounds) 
             except:
                 popt=[np.min(y),intH2,pozH2,FWHMH2]
-                failed=True
-                print('failed ')
+    
+               
             
             lineH2.set_ydata(y)
             lineH2.set_xdata(x)
@@ -445,11 +436,8 @@ class Window(tk.Frame):
             lineH2_fit.set_ydata(fit_lorenz(x, *popt))
             lineH2_fit.set_xdata(x)
             ax.set_ylim(np.min(y),np.max(y))
+            ax.set_xlim(np.min(x),np.max(x))
             canvas2.draw()
-                
-            if failed == True:
-                time.sleep(1) 
-                print('failed to draw')
             
             self.progressbar["value"] = (i/self.intensities.shape[1])*100
             self.progressbar.update()
@@ -462,6 +450,7 @@ class Window(tk.Frame):
             map_posH2=np.append(map_posH2,popt[3])
             map_INTH2=np.append(map_INTH2,popt[1])
         
+        label_H2.destroy()
         map_INTH2=map_INTH2[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         map_posH2=map_posH2[1:].reshape(self.pos_x.shape[0],self.pos_y.shape[0])
         
@@ -555,9 +544,10 @@ def open_ref():
         int_ref=int_ref-int_ref[0]
         return int_ref,lambdas
     
-def subt_subst(int_ref,intensities,master,progressbar,var):
+def subt_subst(ref,intensities,master,progressbar,var):
         
-        ref=int_ref[10:-10]
+        if ref.shape[0]!=intensities.shape[0]:
+            ref=ref[10:-10]
         intensities_new=np.zeros(intensities.shape)
         mem=0
         suma=1e12
@@ -632,9 +622,9 @@ def grafen_plot(X,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9):
         return y
     
 def draw_fitting(name,lambdas,intensities):
-        root2 = tk.Toplevel()
+        root_draw = tk.Toplevel()
         fig2 = plt.Figure()
-        canvas2 = FigureCanvasTkAgg(fig2, master=root2)
+        canvas2 = FigureCanvasTkAgg(fig2, master=root_draw)
         canvas2.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1.0)
         ax = fig2.add_subplot(111)
         
@@ -649,11 +639,11 @@ def draw_fitting(name,lambdas,intensities):
         return ax,line2D,line2D_fit,canvas2
     
 def draw_maps(map_FWHM2D,tite1,map_pos2D,title2,x_ticks,y_ticks):
-        root2 = tk.Toplevel()
-        root2.geometry("400x600")
-        fig3 = plt.Figure()
-        canvas3 = FigureCanvasTkAgg(fig3, master=root2)
-        canvas3.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=False)
+        root_map = tk.Toplevel()
+        root_map.geometry("400x600")
+        fig3 = plt.Figure(figsize=(4,4),dpi=80)
+        canvas3 = FigureCanvasTkAgg(fig3, master=root_map)
+        canvas3.get_tk_widget().pack(side=tk.TOP, expand=1)
         ax = fig3.add_subplot(111)
         ax.set_title(tite1)
         ax.matshow(map_FWHM2D)
@@ -661,9 +651,9 @@ def draw_maps(map_FWHM2D,tite1,map_pos2D,title2,x_ticks,y_ticks):
         ax.set_xticklabels(x_ticks)  
         ax.set_yticklabels(y_ticks)
         
-        fig4=plt.Figure()
-        canvas3 = FigureCanvasTkAgg(fig4, master=root2)
-        canvas3.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=False)
+        fig4=plt.Figure(figsize=(4,4),dpi=80)
+        canvas3 = FigureCanvasTkAgg(fig4, master=root_map)
+        canvas3.get_tk_widget().pack(side=tk.BOTTOM, expand=1)
         ax = fig4.add_subplot(111)
         ax.set_title(title2)
         ax.matshow(map_pos2D)
