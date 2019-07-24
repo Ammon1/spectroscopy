@@ -15,3 +15,5 @@ To aply proper substrate subtraction first scale refrence to data by file->scale
 After it subtract substrate and You may fit all carbon bands. You will obtain maps of FWHM and positions of choosen band.
 ![fitting](https://user-images.githubusercontent.com/10612928/61782377-38f30c00-ae06-11e9-9bd2-ec6eb1caa218.png)
 
+![maps](https://user-images.githubusercontent.com/10612928/61782962-45c42f80-ae07-11e9-9110-1aaf7a96bb53.png)
+
