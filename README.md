@@ -1,5 +1,5 @@
 # spectroscopy
-Program written to analize Raman maps done on Renishaw spectrometer (program reads ONLY Renishaw maps exported to txt or csv). 
+Program written to analize Raman maps done on Renishaw spectrometer (program reads ONLY Renishaw maps exported to txt or csv). If someone will send me spectra from other spectrometers I'll upgrade program to read it.
 To to open file use file->open data
 To open reference use file->open reference
 
