@@ -9,6 +9,8 @@ To open reference use file->open reference
 
 Next You can use file->clean data to remove spikes and noise from spectra.
 
+![cleaning](https://user-images.githubusercontent.com/10612928/61782863-1f05f900-ae07-11e9-8a56-53114173fdf7.png)
+
 To aply proper substrate subtraction first scale refrence to data by file->scale reference
 After it subtract substrate and You may fit all carbon bands. You will obtain maps of FWHM and positions of choosen band.
 ![fitting](https://user-images.githubusercontent.com/10612928/61782377-38f30c00-ae06-11e9-9bd2-ec6eb1caa218.png)
