@@ -1,5 +1,14 @@
-# spectroscopy
+# Renishaw ploting
 Program written to analize Raman maps done on Renishaw spectrometer (program reads ONLY Renishaw maps exported to txt or csv). If someone will send me spectra from other spectrometers I'll upgrade program to read it.
+
+Libraries used:
+tkinter 8.6.8
+pandas 24.2
+numpy 1.16.4
+sklearn
+scipy 1.2.1
+matplotlib 3.1.0
+
 ![menu](https://user-images.githubusercontent.com/10612928/61782121-cda93a00-ae05-11e9-8fce-52add35eaba1.png)
 
 To to open file use file->open data
