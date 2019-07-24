@@ -20,3 +20,7 @@ After it subtract substrate and You may fit all carbon bands. You will obtain ma
 
 ![maps](https://user-images.githubusercontent.com/10612928/61782962-45c42f80-ae07-11e9-9110-1aaf7a96bb53.png)
 
+On each time consuming stage You have stage bar to inform about the process.
+
+![stage_view](https://user-images.githubusercontent.com/10612928/61783362-f5999d00-ae07-11e9-8bd0-0fc6e40a2420.png)
+
