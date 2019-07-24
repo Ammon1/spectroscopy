@@ -5,6 +5,8 @@ Program written to analize Raman maps done on Renishaw spectrometer (program rea
 To to open file use file->open data
 To open reference use file->open reference
 
+![spectra](https://user-images.githubusercontent.com/10612928/61782762-ea923d00-ae06-11e9-8313-fc7621ddd8fa.png)
+
 Next You can use file->clean data to remove spikes and noise from spectra.
 
 To aply proper substrate subtraction first scale refrence to data by file->scale reference
